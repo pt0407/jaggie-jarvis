@@ -191,7 +191,7 @@ export default function SettingsPanel() {
         <input
           ref={folderInputRef}
           type="file"
-          webkitdirectory=""
+          {...({ webkitdirectory: "" } as any)}
           className="hidden"
           onChange={handleFolderChange}
         />

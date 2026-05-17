@@ -197,7 +197,7 @@ export default function JarvisCore() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col"
+                className="h-full flex flex-col min-h-0"
               >
                 <ChatPanel messages={messages} isLoading={isLoading} streamContent={streamContent} onClear={clearChat} />
                 <div className="p-3 border-t border-jarvis-blue-dim/20">
