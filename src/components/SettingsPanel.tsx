@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Key, FolderOpen, Volume2, Eye, EyeOff, Save, ExternalLink, ChevronDown, Check } from "lucide-react";
+import { Key, FolderOpen, Volume2, Eye, EyeOff, Save, ExternalLink, ChevronDown, Check, Folder } from "lucide-react";
 import {
   PROVIDERS,
   getSelectedProvider,
@@ -23,6 +23,19 @@ export default function SettingsPanel() {
   const [vaultPath, setVaultPath] = useState(localStorage.getItem("obsidian_vault_path") || "");
   const [voiceEnabled, setVoiceEnabled] = useState(localStorage.getItem("jarvis_voice") !== "false");
   const [saved, setSaved] = useState(false);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFolderSelect = () => {
+    folderInputRef.current?.click();
+  };
+
+  const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const path = (files[0] as any).webkitRelativePath || files[0].name;
+      setVaultPath(path);
+    }
+  };
 
   const provider = PROVIDERS.find((p) => p.id === activeProvider) || PROVIDERS[0];
 
@@ -159,12 +172,28 @@ export default function SettingsPanel() {
           <FolderOpen className="w-3 h-3" />
           OBSIDIAN VAULT PATH
         </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={vaultPath}
+            onChange={(e) => setVaultPath(e.target.value)}
+            placeholder="/Users/you/Obsidian/MyVault"
+            className={inputCls}
+          />
+          <button
+            onClick={handleFolderSelect}
+            className="px-3 rounded-lg bg-jarvis-dark/50 border border-jarvis-blue-dim/20 hover:border-jarvis-blue/40 hover:bg-jarvis-blue/10 transition-colors"
+            title="Select vault folder"
+          >
+            <Folder className="w-4 h-4 text-jarvis-blue-dim" />
+          </button>
+        </div>
         <input
-          type="text"
-          value={vaultPath}
-          onChange={(e) => setVaultPath(e.target.value)}
-          placeholder="/Users/you/Obsidian/MyVault"
-          className={inputCls}
+          ref={folderInputRef}
+          type="file"
+          webkitdirectory=""
+          className="hidden"
+          onChange={handleFolderChange}
         />
         <p className="text-[10px] font-mono text-jarvis-blue-dim/35">
           Used by the Knowledge tab to index your notes.
