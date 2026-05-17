@@ -245,7 +245,7 @@ export default function JarvisCore() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full"
+                className="h-full min-h-0"
               >
                 <KnowledgeGraph />
               </motion.div>
@@ -257,7 +257,7 @@ export default function JarvisCore() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full overflow-auto p-6"
+                className="h-full min-h-0 overflow-auto p-6"
               >
                 <SystemStatus />
               </motion.div>
@@ -269,7 +269,7 @@ export default function JarvisCore() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full overflow-auto p-6"
+                className="h-full min-h-0 overflow-auto p-6"
               >
                 <SettingsPanel />
               </motion.div>
