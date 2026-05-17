@@ -6,26 +6,10 @@
     "core:default",
     "shell:default",
     "fs:default",
-    "fs:read-all",
-    "fs:write-all",
     "dialog:default",
-    "dialog:open",
-    "dialog:save",
     "global-shortcut:default",
-    "global-shortcut:allow-is-registered",
-    "global-shortcut:allow-register",
-    "global-shortcut:allow-unregister",
     "notification:default",
-    "notification:allow-notify",
-    "notification:allow-request-permission",
     "clipboard-manager:default",
-    "clipboard-manager:allow-read",
-    "clipboard-manager:allow-write",
-    "os:default",
-    "os:allow-os-type",
-    "os:allow-platform",
-    "os:allow-version",
-    "os:allow-arch",
-    "os:allow-locale"
+    "os:default"
   ]
 }

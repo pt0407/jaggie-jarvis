@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Send, Settings, Square, Brain } from "lucide-react";
+import { Mic, MicOff, Send, Settings, Square, Brain, VolumeX } from "lucide-react";
 import { useAI } from "../hooks/useAI";
 import { useVoice } from "../hooks/useVoice";
 import ChatPanel from "./ChatPanel";
@@ -11,6 +11,18 @@ import SettingsPanel from "./SettingsPanel";
 
 export default function JarvisCore() {
   const { messages, isLoading, streamContent, sendMessage, clearChat, stopGeneration } = useAI();
+  const speakRef = useRef<((text: string) => void) | null>(null);
+  const clearTranscriptRef = useRef<(() => void) | null>(null);
+
+  const handleSend = useCallback(async (text: string) => {
+    if (!text.trim() || isLoading) return;
+    setInput("");
+    const response = await sendMessage(text);
+    if (response && localStorage.getItem("jarvis_voice") !== "false") {
+      speakRef.current?.(response);
+    }
+  }, [isLoading, sendMessage]);
+
   const {
     isListening,
     transcript,
@@ -19,9 +31,15 @@ export default function JarvisCore() {
     toggleListening,
     clearTranscript,
     speak,
-  } = useVoice();
+    stopSpeaking,
+  } = useVoice(useCallback((text: string) => {
+    handleSend(text);
+    clearTranscriptRef.current?.();
+  }, [handleSend]));
 
-  const [showCore] = useState(true);
+  speakRef.current = speak;
+  clearTranscriptRef.current = clearTranscript;
+
   const [input, setInput] = useState("");
   const [activeTab, setActiveTab] = useState<"chat" | "knowledge" | "status" | "settings">("chat");
   const [uptime, setUptime] = useState("00:00:00");
@@ -38,28 +56,9 @@ export default function JarvisCore() {
     return () => clearInterval(iv);
   }, [startTime]);
 
-  // Auto-send voice transcript when user stops speaking
-  useEffect(() => {
-    if (!isListening && transcript.trim()) {
-      const timer = setTimeout(() => {
-        handleSend(transcript.trim());
-        clearTranscript();
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [isListening, transcript]);
-
-  const handleSend = async (text: string) => {
-    if (!text.trim() || isLoading) return;
-    setInput("");
-    const response = await sendMessage(text);
-    if (response) {
-      speak(response);
-    }
-  };
 
   return (
-    <div className="relative w-screen h-screen bg-jarvis-bg circuit-pattern overflow-hidden select-none">
+    <div className="relative w-screen h-screen bg-jarvis-bg circuit-pattern overflow-hidden">
       {/* Ambient background glow */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div className="w-[600px] h-[600px] rounded-full bg-jarvis-blue-dim blur-[150px] opacity-20" />
@@ -103,13 +102,11 @@ export default function JarvisCore() {
         {/* Left panel - JARVIS Core */}
         <div className="w-1/3 flex flex-col items-center justify-center relative">
           <AnimatePresence>
-            {showCore && (
-              <motion.div
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                className="relative flex items-center justify-center"
-              >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="relative flex items-center justify-center"
+            >
                 {/* Outer rotating ring */}
                 <div className="absolute w-[320px] h-[320px] rounded-full border border-jarvis-blue-dim jarvis-rotate opacity-30" />
                 <div className="absolute w-[300px] h-[300px] rounded-full border border-dashed border-jarvis-blue-dim jarvis-rotate opacity-20" style={{ animationDirection: "reverse", animationDuration: "30s" }} />
@@ -152,8 +149,7 @@ export default function JarvisCore() {
                     />
                   ))}
                 </div>
-              </motion.div>
-            )}
+            </motion.div>
           </AnimatePresence>
 
           {/* Voice visualizer below core */}
@@ -170,9 +166,19 @@ export default function JarvisCore() {
                   ? "bg-jarvis-red border border-jarvis-red shadow-[0_0_20px_rgba(255,51,102,0.4)]"
                   : "bg-jarvis-dark border border-jarvis-blue hover:bg-jarvis-blue-dim"
               }`}
+              title={isListening ? "Stop listening" : "Start listening"}
             >
               {isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-jarvis-blue" />}
             </button>
+            {isSpeaking && (
+              <button
+                onClick={stopSpeaking}
+                className="w-12 h-12 rounded-full bg-jarvis-orange/20 border border-jarvis-orange/50 flex items-center justify-center hover:bg-jarvis-orange/30 transition-all shadow-[0_0_15px_rgba(255,140,0,0.3)]"
+                title="Stop speaking"
+              >
+                <VolumeX className="w-5 h-5 text-jarvis-orange" />
+              </button>
+            )}
             <button
               onClick={() => setActiveTab("settings")}
               className="w-12 h-12 rounded-full bg-jarvis-dark border border-jarvis-blue-dim flex items-center justify-center hover:border-jarvis-blue transition-colors"

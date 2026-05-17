@@ -8,7 +8,9 @@ export interface VoiceState {
   error: string | null;
 }
 
-export function useVoice() {
+const SILENCE_TIMEOUT_MS = 2000;
+
+export function useVoice(onSilence?: (transcript: string) => void) {
   const [state, setState] = useState<VoiceState>({
     isListening: false,
     transcript: "",
@@ -19,6 +21,15 @@ export function useVoice() {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const accumulatedRef = useRef("");
+  const onSilenceRef = useRef(onSilence);
+  onSilenceRef.current = onSilence;
+
+  const clearSilenceTimer = () => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    silenceTimerRef.current = null;
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -31,36 +42,52 @@ export function useVoice() {
         recognitionRef.current.lang = "en-US";
 
         recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
+          clearSilenceTimer();
           let interim = "";
-          let final = "";
+          let finalChunk = "";
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
+            const t = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-              final += transcript;
+              finalChunk += t;
             } else {
-              interim += transcript;
+              interim += t;
             }
+          }
+          if (finalChunk) {
+            accumulatedRef.current += (accumulatedRef.current ? " " : "") + finalChunk.trim();
           }
           setState((prev) => ({
             ...prev,
-            transcript: prev.transcript + final,
+            transcript: accumulatedRef.current,
             interimTranscript: interim,
           }));
+          // Start silence timer after any speech activity
+          if (finalChunk || interim) {
+            silenceTimerRef.current = setTimeout(() => {
+              const text = accumulatedRef.current.trim();
+              if (text && onSilenceRef.current) {
+                recognitionRef.current?.stop();
+                onSilenceRef.current(text);
+              }
+            }, SILENCE_TIMEOUT_MS);
+          }
         };
 
         recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-          if (event.error !== "aborted") {
+          if (event.error !== "aborted" && event.error !== "no-speech") {
             setState((prev) => ({ ...prev, error: event.error, isListening: false }));
           }
         };
 
         recognitionRef.current.onend = () => {
-          setState((prev) => ({ ...prev, isListening: false }));
+          clearSilenceTimer();
+          setState((prev) => ({ ...prev, isListening: false, interimTranscript: "" }));
         };
       }
 
       synthRef.current = window.speechSynthesis;
     }
+    return () => clearSilenceTimer();
   }, []);
 
   const startListening = useCallback(() => {
@@ -69,8 +96,9 @@ export function useVoice() {
       return;
     }
     try {
+      accumulatedRef.current = "";
       recognitionRef.current.start();
-      setState((prev) => ({ ...prev, isListening: true, error: null, interimTranscript: "" }));
+      setState((prev) => ({ ...prev, isListening: true, transcript: "", error: null, interimTranscript: "" }));
     } catch {
       // Already started
     }
@@ -90,6 +118,7 @@ export function useVoice() {
   }, [state.isListening, startListening, stopListening]);
 
   const clearTranscript = useCallback(() => {
+    accumulatedRef.current = "";
     setState((prev) => ({ ...prev, transcript: "", interimTranscript: "" }));
   }, []);
 

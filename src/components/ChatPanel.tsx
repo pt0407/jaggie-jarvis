@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { User, Bot, Trash2 } from "lucide-react";
 import type { Message } from "../hooks/useAI";
@@ -12,8 +12,17 @@ interface ChatPanelProps {
 
 export default function ChatPanel({ messages, isLoading, streamContent, onClear }: ChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
+
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const threshold = 80;
+    isNearBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+  }, []);
 
   useEffect(() => {
+    if (!isNearBottomRef.current) return;
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, streamContent]);
 
@@ -29,7 +38,7 @@ export default function ChatPanel({ messages, isLoading, streamContent, onClear 
           <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-3 space-y-4 select-text">
         {messages.map((msg, i) => (
           <motion.div
             key={msg.id}
