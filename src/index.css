@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  --color-jarvis-bg: #050505;
+  --color-jarvis-dark: #0a0a0f;
+  --color-jarvis-blue: #00d4ff;
+  --color-jarvis-blue-dim: #00d4ff66;
+  --color-jarvis-glow: #00d4ff33;
+  --color-jarvis-orange: #ff6b35;
+  --color-jarvis-green: #00ff88;
+  --color-jarvis-red: #ff3366;
+  --color-jarvis-purple: #b829dd;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px var(--color-jarvis-blue-dim), 0 0 40px var(--color-jarvis-glow); }
+  50% { box-shadow: 0 0 30px var(--color-jarvis-blue-dim), 0 0 60px var(--color-jarvis-glow), 0 0 80px var(--color-jarvis-glow); }
+}
+
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+  to { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.jarvis-ring {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.jarvis-rotate {
+  animation: rotate-slow 20s linear infinite;
+}
+
+.jarvis-orbit {
+  animation: orbit 8s linear infinite;
+}
+
+.jarvis-scan {
+  animation: scan-line 3s linear infinite;
+}
+
+.jarvis-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.jarvis-breathe {
+  animation: breathe 3s ease-in-out infinite;
+}
+
+.glass-panel {
+  background: rgba(10, 10, 15, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.text-glow {
+  text-shadow: 0 0 10px var(--color-jarvis-blue-dim), 0 0 20px var(--color-jarvis-glow);
+}
+
+.circuit-pattern {
+  background-image: 
+    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.5);
+}
