@@ -4,7 +4,7 @@ import { Upload, Search, FileText, Link2, Brain, Edit2, Save, X, Plus } from "lu
 import { useObsidian } from "../hooks/useObsidian";
 
 export default function KnowledgeGraph() {
-  const { graph, isScanning, importFromFiles, searchVault, setGraph } = useObsidian();
+  const { graph, isScanning, importFromFiles, searchVault, setGraph, scanVault, vaultPath } = useObsidian();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState("");
   const [showLinkDropdown, setShowLinkDropdown] = useState(false);
@@ -148,12 +148,23 @@ export default function KnowledgeGraph() {
       <div className="flex items-center justify-between px-4 py-2 border-b border-jarvis-blue-dim/20">
         <span className="text-xs font-mono text-jarvis-blue-dim tracking-wider">NEURAL KNOWLEDGE NETWORK</span>
         <div className="flex gap-2">
+          {vaultPath && window.__TAURI__ && (
+            <button
+              onClick={scanVault}
+              disabled={isScanning}
+              className="text-xs font-mono text-jarvis-green flex items-center gap-1 hover:text-jarvis-green/70 transition-colors disabled:opacity-50"
+              title={`Scan vault at: ${vaultPath}`}
+            >
+              <Brain className="w-3 h-3" />
+              {isScanning ? "SCANNING..." : "SCAN VAULT"}
+            </button>
+          )}
           <button
             onClick={() => fileInputRef.current?.click()}
             className="text-xs font-mono text-jarvis-blue flex items-center gap-1 hover:text-jarvis-blue/70 transition-colors"
           >
             <Upload className="w-3 h-3" />
-            IMPORT VAULT
+            IMPORT FILES
           </button>
           <input
             ref={fileInputRef}
