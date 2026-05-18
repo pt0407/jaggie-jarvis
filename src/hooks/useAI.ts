@@ -65,11 +65,36 @@ export function useAI() {
 
         // Inject relevant memory context
         const relatedMemory = searchMemory(content);
+
+        // Also inject relevant Obsidian vault notes
+        const vaultContext: string[] = [];
+        try {
+          const stored = localStorage.getItem("obsidian_vault_data");
+          if (stored) {
+            const vaultGraph = JSON.parse(stored);
+            const lower = content.toLowerCase();
+            const relevantNotes = vaultGraph.nodes?.filter((n: any) =>
+              n.name.toLowerCase().includes(lower) ||
+              n.content.toLowerCase().includes(lower) ||
+              n.tags?.some((t: string) => lower.includes(t.toLowerCase()))
+            ).slice(0, 5);
+
+            // If no specific match, include all notes as general context
+            const notesToInclude = relevantNotes?.length > 0
+              ? relevantNotes
+              : vaultGraph.nodes?.slice(0, 10);
+
+            notesToInclude?.forEach((n: any) => {
+              vaultContext.push(`## ${n.name}\n${n.content.slice(0, 800)}`);
+            });
+          }
+        } catch { /* ignore */ }
+
         const memoryContext =
-          relatedMemory.length > 0
+          relatedMemory.length > 0 || vaultContext.length > 0
             ? `\n\n[MEMORY CONTEXT]\n${relatedMemory
                 .map((m) => `- ${m.label}: ${m.content}`)
-                .join("\n")}\n[END MEMORY]`
+                .join("\n")}${vaultContext.length > 0 ? "\n\n[OBSIDIAN VAULT NOTES]\n" + vaultContext.join("\n\n") : ""}\n[END MEMORY]`
             : "";
 
         abortRef.current = new AbortController();
