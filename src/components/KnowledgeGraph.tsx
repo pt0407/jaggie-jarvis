@@ -7,6 +7,7 @@ export default function KnowledgeGraph() {
   const { graph, isScanning, importFromFiles, searchVault, setGraph } = useObsidian();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState("");
+  const [showLinkDropdown, setShowLinkDropdown] = useState(false);
 
   const renderContentWithLinks = useCallback((content: string): React.ReactNode => {
     const parts: (string | React.ReactNode)[] = [];
@@ -96,6 +97,34 @@ export default function KnowledgeGraph() {
     setIsEditing(false);
     setEditedContent("");
   }, []);
+
+  const handleCreateLink = useCallback((targetNoteId: string) => {
+    if (selectedNote) {
+      const targetNote = graph.nodes.find((n) => n.id === targetNoteId);
+      if (!targetNote) return;
+
+      // Add wikilink to current note's content
+      const newContent = selectedNote.content.trim() + `\n[[${targetNote.name}]]`;
+      const updatedNodes = graph.nodes.map((n) =>
+        n.id === selectedNote.id
+          ? {
+              ...n,
+              content: newContent,
+              wordCount: newContent.split(/\s+/).length,
+              links: [...new Set([...n.links, targetNote.name])],
+            }
+          : n.id === targetNoteId
+          ? {
+              ...targetNote,
+              backLinks: [...new Set([...targetNote.backLinks, selectedNote.name])],
+            }
+          : n
+      );
+      setGraph({ ...graph, nodes: updatedNodes });
+      localStorage.setItem("obsidian_vault_data", JSON.stringify({ ...graph, nodes: updatedNodes }));
+      setShowLinkDropdown(false);
+    }
+  }, [selectedNote, graph, setGraph]);
 
   return (
     <div className="h-full flex flex-col">
@@ -242,24 +271,57 @@ export default function KnowledgeGraph() {
                   {renderContentWithLinks(selectedNote.content)}
                 </div>
               )}
-              {!isEditing && (selectedNote.links.length > 0 || selectedNote.backLinks.length > 0) && (
+              {!isEditing && (
                 <div className="mt-6 pt-4 border-t border-jarvis-blue-dim/10">
-                  <div className="flex items-center gap-2 text-xs font-mono text-jarvis-blue-dim mb-2">
-                    <Link2 className="w-3 h-3" />
-                    CONNECTIONS
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {[...selectedNote.links, ...selectedNote.backLinks].map((link) => (
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-xs font-mono text-jarvis-blue-dim">
+                      <Link2 className="w-3 h-3" />
+                      CONNECTIONS
+                    </div>
+                    <div className="relative">
                       <button
-                        key={link}
-                        onClick={() => setSelectedNode(link)}
-                        className="px-2 py-1 rounded bg-jarvis-dark/50 border border-jarvis-blue-dim/20 text-xs text-jarvis-blue hover:border-jarvis-blue/40 transition-colors"
+                        onClick={() => setShowLinkDropdown(!showLinkDropdown)}
+                        className="text-xs font-mono text-jarvis-blue flex items-center gap-1.5 hover:text-jarvis-blue/70 transition-colors"
                       >
-                        {link}
+                        <Plus className="w-3 h-3" />
+                        CREATE LINK
                       </button>
-                    ))}
+                      {showLinkDropdown && (
+                        <div className="absolute right-0 top-8 w-48 bg-jarvis-dark/95 border border-jarvis-blue-dim/30 rounded-lg shadow-xl z-10 max-h-48 overflow-auto">
+                          {graph.nodes
+                            .filter((n) => n.id !== selectedNote.id && !selectedNote.links.includes(n.name))
+                            .map((node) => (
+                              <button
+                                key={node.id}
+                                onClick={() => handleCreateLink(node.id)}
+                                className="w-full text-left px-3 py-2 text-xs text-gray-300 hover:bg-jarvis-blue/10 hover:text-jarvis-blue transition-colors"
+                              >
+                                {node.name}
+                              </button>
+                            ))}
+                          {graph.nodes.filter((n) => n.id !== selectedNote.id && !selectedNote.links.includes(n.name)).length === 0 && (
+                            <div className="px-3 py-2 text-xs text-jarvis-blue-dim/50">
+                              No notes to link
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                  {(selectedNote.links.length > 0 || selectedNote.backLinks.length > 0) && (
+                    <div className="flex flex-wrap gap-2">
+                      {[...selectedNote.links, ...selectedNote.backLinks].map((link) => (
+                        <button
+                          key={link}
+                          onClick={() => setSelectedNode(link)}
+                          className="px-2 py-1 rounded bg-jarvis-dark/50 border border-jarvis-blue-dim/20 text-xs text-jarvis-blue hover:border-jarvis-blue/40 transition-colors"
+                        >
+                          {link}
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
               )}
               </div>
             </motion.div>
