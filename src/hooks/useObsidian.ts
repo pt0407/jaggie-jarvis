@@ -153,6 +153,7 @@ export function useObsidian() {
 
   return {
     graph,
+    setGraph,
     isScanning,
     vaultPath,
     setVaultPath,

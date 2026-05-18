@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Upload, Search, FileText, Link2, Brain } from "lucide-react";
+import { Upload, Search, FileText, Link2, Brain, Edit2, Save, X, Plus } from "lucide-react";
 import { useObsidian } from "../hooks/useObsidian";
 
 export default function KnowledgeGraph() {
-  const { graph, isScanning, importFromFiles, searchVault } = useObsidian();
+  const { graph, isScanning, importFromFiles, searchVault, setGraph } = useObsidian();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState("");
 
   const renderContentWithLinks = useCallback((content: string): React.ReactNode => {
     const parts: (string | React.ReactNode)[] = [];
@@ -61,6 +63,39 @@ export default function KnowledgeGraph() {
     },
     [importFromFiles]
   );
+
+  const handleEditStart = useCallback(() => {
+    if (selectedNote) {
+      setEditedContent(selectedNote.content);
+      setIsEditing(true);
+    }
+  }, [selectedNote]);
+
+  const handleSaveEdit = useCallback(() => {
+    if (selectedNote) {
+      const updatedNodes = graph.nodes.map((n) =>
+        n.id === selectedNote.id
+          ? {
+              ...n,
+              content: editedContent,
+              wordCount: editedContent.split(/\s+/).length,
+            }
+          : n
+      );
+      setGraph({ ...graph, nodes: updatedNodes });
+      localStorage.setItem("obsidian_vault_data", JSON.stringify({ ...graph, nodes: updatedNodes }));
+      setIsEditing(false);
+    }
+  }, [selectedNote, editedContent, graph, setGraph]);
+
+  const handleInsertWikiLink = useCallback((noteName: string) => {
+    setEditedContent((prev) => prev + `[[${noteName}]]`);
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setIsEditing(false);
+    setEditedContent("");
+  }, []);
 
   return (
     <div className="h-full flex flex-col">
@@ -135,20 +170,79 @@ export default function KnowledgeGraph() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex-1 overflow-auto p-6"
+              className="flex-1 flex flex-col overflow-hidden"
             >
-              <h2 className="text-lg font-light text-jarvis-blue text-glow mb-2">{selectedNote.name}</h2>
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {selectedNote.tags.map((tag) => (
-                  <span key={tag} className="px-2 py-0.5 rounded-full bg-jarvis-blue/10 border border-jarvis-blue/20 text-[10px] font-mono text-jarvis-blue">
-                    #{tag}
-                  </span>
-                ))}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-jarvis-blue-dim/10">
+                <h2 className="text-lg font-light text-jarvis-blue text-glow">{selectedNote.name}</h2>
+                {!isEditing ? (
+                  <button
+                    onClick={handleEditStart}
+                    className="text-xs font-mono text-jarvis-blue flex items-center gap-1.5 hover:text-jarvis-blue/70 transition-colors"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    EDIT
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleCancelEdit}
+                      className="text-xs font-mono text-jarvis-red flex items-center gap-1.5 hover:text-jarvis-red/70 transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                      CANCEL
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      className="text-xs font-mono text-jarvis-green flex items-center gap-1.5 hover:text-jarvis-green/70 transition-colors"
+                    >
+                      <Save className="w-3.5 h-3.5" />
+                      SAVE
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-mono">
-                {renderContentWithLinks(selectedNote.content)}
-              </div>
-              {(selectedNote.links.length > 0 || selectedNote.backLinks.length > 0) && (
+              <div className="flex-1 overflow-auto p-6">
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {selectedNote.tags.map((tag) => (
+                    <span key={tag} className="px-2 py-0.5 rounded-full bg-jarvis-blue/10 border border-jarvis-blue/20 text-[10px] font-mono text-jarvis-blue">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+                {isEditing ? (
+                <div className="space-y-4">
+                  <textarea
+                    value={editedContent}
+                    onChange={(e) => setEditedContent(e.target.value)}
+                    className="w-full h-64 bg-jarvis-dark/50 border border-jarvis-blue-dim/20 rounded-lg px-4 py-3 text-sm text-white placeholder-jarvis-blue-dim/30 focus:outline-none focus:border-jarvis-blue/40 font-mono resize-none"
+                    placeholder="Write your note here... Use [[Note Name]] to create links."
+                  />
+                  <div>
+                    <p className="text-xs font-mono text-jarvis-blue-dim mb-2 flex items-center gap-1.5">
+                      <Plus className="w-3 h-3" />
+                      INSERT WIKILINK
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {graph.nodes
+                        .filter((n) => n.id !== selectedNote.id)
+                        .map((node) => (
+                          <button
+                            key={node.id}
+                            onClick={() => handleInsertWikiLink(node.name)}
+                            className="px-2 py-1 rounded bg-jarvis-dark/50 border border-jarvis-blue-dim/20 text-xs text-jarvis-blue hover:border-jarvis-blue/40 hover:bg-jarvis-blue/10 transition-colors"
+                          >
+                            {node.name}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-mono">
+                  {renderContentWithLinks(selectedNote.content)}
+                </div>
+              )}
+              {!isEditing && (selectedNote.links.length > 0 || selectedNote.backLinks.length > 0) && (
                 <div className="mt-6 pt-4 border-t border-jarvis-blue-dim/10">
                   <div className="flex items-center gap-2 text-xs font-mono text-jarvis-blue-dim mb-2">
                     <Link2 className="w-3 h-3" />
@@ -167,6 +261,7 @@ export default function KnowledgeGraph() {
                   </div>
                 </div>
               )}
+              </div>
             </motion.div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
