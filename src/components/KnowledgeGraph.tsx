@@ -5,6 +5,47 @@ import { useObsidian } from "../hooks/useObsidian";
 
 export default function KnowledgeGraph() {
   const { graph, isScanning, importFromFiles, searchVault } = useObsidian();
+
+  const renderContentWithLinks = useCallback((content: string): React.ReactNode => {
+    const parts: (string | React.ReactNode)[] = [];
+    const wikiLinkRegex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = wikiLinkRegex.exec(content)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push(content.slice(lastIndex, match.index));
+      }
+
+      const linkTarget = match[1].trim();
+      const targetNode = graph.nodes.find((n) => n.id.toLowerCase() === linkTarget.toLowerCase());
+
+      if (targetNode) {
+        parts.push(
+          <button
+            key={`${match.index}-${linkTarget}`}
+            onClick={() => setSelectedNode(targetNode.id)}
+            className="px-1.5 py-0.5 rounded bg-jarvis-blue/10 border border-jarvis-blue/20 text-jarvis-blue hover:bg-jarvis-blue/20 hover:border-jarvis-blue/40 transition-colors text-xs font-mono"
+          >
+            {linkTarget}
+          </button>
+        );
+      } else {
+        // Link target not found, render as plain text
+        parts.push(match[0]);
+      }
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push(content.slice(lastIndex));
+    }
+
+    return parts;
+  }, [graph.nodes]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -105,7 +146,7 @@ export default function KnowledgeGraph() {
                 ))}
               </div>
               <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap font-mono">
-                {selectedNote.content}
+                {renderContentWithLinks(selectedNote.content)}
               </div>
               {(selectedNote.links.length > 0 || selectedNote.backLinks.length > 0) && (
                 <div className="mt-6 pt-4 border-t border-jarvis-blue-dim/10">
