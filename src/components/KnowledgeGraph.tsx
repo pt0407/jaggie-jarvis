@@ -171,6 +171,7 @@ export default function KnowledgeGraph() {
             type="file"
             multiple
             accept=".md"
+            {...({ webkitdirectory: "" } as any)}
             onChange={handleFileSelect}
             className="hidden"
           />
