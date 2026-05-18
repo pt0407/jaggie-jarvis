@@ -105,14 +105,14 @@ export default function JarvisCore() {
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="relative flex items-center justify-center"
+              className="relative flex items-center justify-center pointer-events-none"
             >
                 {/* Outer rotating ring */}
-                <div className="absolute w-[320px] h-[320px] rounded-full border border-jarvis-blue-dim jarvis-rotate opacity-30" />
-                <div className="absolute w-[300px] h-[300px] rounded-full border border-dashed border-jarvis-blue-dim jarvis-rotate opacity-20" style={{ animationDirection: "reverse", animationDuration: "30s" }} />
+                <div className="absolute w-[320px] h-[320px] rounded-full border border-jarvis-blue-dim jarvis-rotate opacity-30 pointer-events-none" />
+                <div className="absolute w-[300px] h-[300px] rounded-full border border-dashed border-jarvis-blue-dim jarvis-rotate opacity-20 pointer-events-none" style={{ animationDirection: "reverse", animationDuration: "30s" }} />
 
                 {/* Middle pulsing ring */}
-                <div className="absolute w-[260px] h-[260px] rounded-full border-2 border-jarvis-blue jarvis-breathe opacity-40" />
+                <div className="absolute w-[260px] h-[260px] rounded-full border-2 border-jarvis-blue jarvis-breathe opacity-40 pointer-events-none" />
 
                 {/* Inner data ring */}
                 <svg className="absolute w-[240px] h-[240px] jarvis-rotate" style={{ animationDuration: "15s" }} viewBox="0 0 240 240">
@@ -158,7 +158,7 @@ export default function JarvisCore() {
           </div>
 
           {/* Quick action buttons */}
-          <div className="mt-6 flex gap-3">
+          <div className="mt-6 flex gap-3 pointer-events-auto">
             <button
               onClick={toggleListening}
               className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
