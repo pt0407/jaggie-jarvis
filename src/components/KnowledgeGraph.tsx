@@ -120,8 +120,25 @@ export default function KnowledgeGraph() {
             }
           : n
       );
-      setGraph({ ...graph, nodes: updatedNodes });
-      localStorage.setItem("obsidian_vault_data", JSON.stringify({ ...graph, nodes: updatedNodes }));
+
+      // Rebuild graph links
+      const updatedLinks: { source: string; target: string; strength: number }[] = [];
+      const nodeMap = new Map(updatedNodes.map((n) => [n.id, n]));
+      updatedNodes.forEach((node) => {
+        node.links.forEach((linkId) => {
+          if (nodeMap.has(linkId)) {
+            updatedLinks.push({
+              source: node.id,
+              target: linkId,
+              strength: 1,
+            });
+          }
+        });
+      });
+
+      const newGraph = { nodes: updatedNodes, links: updatedLinks };
+      setGraph(newGraph);
+      localStorage.setItem("obsidian_vault_data", JSON.stringify(newGraph));
       setShowLinkDropdown(false);
     }
   }, [selectedNote, graph, setGraph]);
