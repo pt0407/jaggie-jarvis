@@ -31,7 +31,14 @@ export interface VaultGraph {
 }
 
 export function useObsidian() {
-  const [graph, setGraph] = useState<VaultGraph>({ nodes: [], links: [] });
+  const [graph, setGraph] = useState<VaultGraph>(() => {
+    try {
+      const stored = localStorage.getItem("obsidian_vault_data");
+      return stored ? JSON.parse(stored) : { nodes: [], links: [] };
+    } catch {
+      return { nodes: [], links: [] };
+    }
+  });
   const [isScanning, setIsScanning] = useState(false);
   const [vaultPath, setVaultPath] = useState(localStorage.getItem("obsidian_vault_path") || "");
 
