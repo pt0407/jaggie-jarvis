@@ -319,9 +319,9 @@ export default function KnowledgeGraph() {
                           {link}
                         </button>
                       ))}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  )}
+                </div>
               )}
               </div>
             </motion.div>
